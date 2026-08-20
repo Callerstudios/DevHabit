@@ -1,0 +1,138 @@
+# ==========================================
+# .NET
+# ==========================================
+
+# Build output
+**/bin/
+**/obj/
+
+# Test results
+**/TestResults/
+**/*.trx
+
+# .NET user-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio
+.vs/
+
+# Rider
+.idea/
+
+# VS Code
+.vscode/
+
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/
+
+# Generated NuGet files
+**/project.assets.json
+**/project.nuget.cache
+**/artifacts/
+
+
+# ==========================================
+# Logs
+# ==========================================
+
+*.log
+logs/
+**/logs/
+
+
+# ==========================================
+# Local configuration / secrets
+# ==========================================
+
+# Local environment variables
+.env
+.env.*
+!.env.example
+
+# Local ASP.NET configuration
+appsettings.Development.json
+appsettings.Local.json
+
+# User secrets
+secrets.json
+
+
+# ==========================================
+# Docker
+# ==========================================
+
+# Local Docker data
+.containers/
+
+# Docker Compose overrides
+docker-compose.override.yml
+
+# Docker environment files
+docker-compose.env
+
+
+# ==========================================
+# Databases / local development data
+# ==========================================
+
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+
+# ==========================================
+# Coverage
+# ==========================================
+
+coverage/
+coverage.xml
+*.coverage
+*.coveragexml
+
+
+# ==========================================
+# OS files
+# ==========================================
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# macOS
+.DS_Store
+
+# Linux
+*~
+
+
+# ==========================================
+# Publish output
+# ==========================================
+
+**/publish/
+**/Publish/
+*.publishsettings
+
+
+# ==========================================
+# CI/CD local files
+# ==========================================
+
+# GitHub Actions local artifacts
+.github/**/*.log
+
+# Azure DevOps local artifacts
+TestResults/
+
+# Deployment packages
+*.zip
+*.tar
+*.tar.gz

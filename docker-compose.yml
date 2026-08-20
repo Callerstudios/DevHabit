@@ -1,0 +1,51 @@
+services:
+
+  devhabit.api:
+    image: ${DOCKER_REGISTRY-}devhabitapi
+    build:
+      context: .
+      dockerfile: DevHabit.API/Dockerfile
+    ports:
+      - "5000:8080"
+      - "5001:8081"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://devhabit.aspire-dashboard:18889
+      - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+      - ConnectionStrings__DefaultConnection=Host=devhabit.postgres;Port=5432;Database=devhabit;Username=postgres;Password=devhabit
+    depends_on:
+      - devhabit.postgres
+      - devhabit.aspire-dashboard
+
+  devhabit.postgres:
+    image: postgres:17
+    container_name: devhabit.postgres
+    environment:
+      - POSTGRES_DB=devhabit
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./.containers/postgres_data:/var/lib/postgresql/data
+
+  devhabit.seq:
+    image: datalust/seq:latest
+    container_name: devhabit.seq
+    ports:
+      - "5341:5341"
+      - "8080:80"
+    environment:
+      - ACCEPT_EULA=Y
+      - SEQ_FIRSTRUN_ADMINPASSWORD=DevHabitSeq123!
+    volumes:
+      - ./.containers/seq_data:/data
+
+  devhabit.aspire-dashboard:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:latest
+    container_name: aspire-dashboard
+    environment:
+      - DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS=true
+    ports:
+      - "18888:18888"
+      - "18889:18889"
