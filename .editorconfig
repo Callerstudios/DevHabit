@@ -155,6 +155,8 @@ dotnet_analyzer_diagnostic.severity = suggestion
 # CA1062: Validate arguments of public methods
 dotnet_diagnostic.CA1062.severity = suggestion
 
+dotnet_diagnostic.CA1308.severity = none
+
 # CA2007: Consider calling ConfigureAwait on the awaited task
 dotnet_diagnostic.CA2007.severity = suggestion
 

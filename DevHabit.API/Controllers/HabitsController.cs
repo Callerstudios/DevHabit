@@ -2,6 +2,8 @@ using System.Linq.Expressions;
 using DevHabit.API.Database;
 using DevHabit.API.DTOs.Habits;
 using DevHabit.API.Entities;
+using FluentValidation;
+using FluentValidation.Results;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -26,11 +28,11 @@ public sealed class HabitsController(ApplicationDbContext dbContext) : Controlle
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<HabitDto>> GetHabit(string id)
+    public async Task<ActionResult<HabitwithTagsDto>> GetHabit(string id)
     {
-        HabitDto? habit = await dbContext.Habits
+        HabitwithTagsDto? habit = await dbContext.Habits
             .Where(h => h.Id == id)
-            .Select(HabitQueries.ProjectToDto())
+            .Select(HabitQueries.ProjectToHabitWithTagsDto())
             .FirstOrDefaultAsync();
         if(habit == null)
         {
@@ -40,8 +42,9 @@ public sealed class HabitsController(ApplicationDbContext dbContext) : Controlle
     }
 
     [HttpPost]
-    public async Task<ActionResult> CreateHabit(CreateHabitDto createHabitDto)
+    public async Task<ActionResult> CreateHabit(CreateHabitDto createHabitDto, IValidator<CreateHabitDto> validator)
     {
+        await validator.ValidateAndThrowAsync(createHabitDto);
         Habit habit = createHabitDto.ToEntity();
         dbContext.Habits.Add(habit);
         await dbContext.SaveChangesAsync();
