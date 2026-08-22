@@ -1,9 +1,29 @@
 using DevHabit.API.Entities;
+using DevHabit.API.Services.Sorting;
 
 namespace DevHabit.API.DTOs.Habits;
 
 internal static class HabitMappings
 {
+    public static readonly SortMappingDefinition<HabitDto, Habit> SortMapping = new()
+    {
+        Mappings =
+    [
+        new(nameof(HabitDto.Name), nameof(Habit.Name)),
+        new(nameof(HabitDto.Description), nameof(Habit.Description)),
+        new(nameof(HabitDto.Type), nameof(Habit.Type)),
+        new(nameof(HabitDto.Status), nameof(Habit.Status)),
+        new(nameof(HabitDto.IsArchived), nameof(Habit.IsArchived)),
+        new(nameof(HabitDto.EndDate), nameof(Habit.EndDate)),
+        new(nameof(HabitDto.CreatedAtUtc), nameof(Habit.CreatedAtUtc)),
+        new(nameof(HabitDto.UpdatedAtUtc), nameof(Habit.UpdatedAtUtc)),
+        new(nameof(HabitDto.LastCompletedAtUtc), nameof(Habit.LastCompletedAtUtc)),
+        new(nameof(FrequencyDto.Type), $"{nameof(Habit.Frequency)}.{nameof(Frequency.Type)}"),
+        new(nameof(FrequencyDto.TimesPerPeriod), $"{nameof(Habit.Frequency)}.{nameof(Frequency.TimesPerPeriod)}"),
+        new(nameof(TargetDto.Value), $"{nameof(Habit.Target)}.{nameof(Target.Value)}"),
+        new(nameof(TargetDto.Unit), $"{nameof(Habit.Target)}.{nameof(Target.Unit)}")
+    ]
+    };
     public static HabitDto ToDto(this Habit habit)
     {
         return new HabitDto

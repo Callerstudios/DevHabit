@@ -49,12 +49,7 @@ public sealed class TagsController(ApplicationDbContext dbContext) : ControllerB
     [HttpPost]
     public async Task<ActionResult<TagDto>> CreateTag(CreateTagDto dto, IValidator<CreateTagDto> validator)
     {
-        ValidationResult validationResult = await validator.ValidateAsync(dto);
-
-        if (!validationResult.IsValid)
-        {
-            return ValidationProblem(new ValidationProblemDetails(validationResult.ToDictionary()));
-        }
+        await validator.ValidateAndThrowAsync(dto);
         Tag tag = dto.ToEntity();
 
         if (await dbContext.Tags.AnyAsync(t => t.Name == tag.Name))

@@ -2,11 +2,13 @@ using System.Linq.Expressions;
 using DevHabit.API.Database;
 using DevHabit.API.DTOs.Habits;
 using DevHabit.API.Entities;
+using DevHabit.API.Services.Sorting;
 using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using OpenTelemetry.Trace;
 
 namespace DevHabit.API.Controllers;
 
@@ -15,9 +17,27 @@ namespace DevHabit.API.Controllers;
 public sealed class HabitsController(ApplicationDbContext dbContext) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<HabitsCollectionDto>> GetHabits()
+    public async Task<ActionResult<HabitsCollectionDto>> GetHabits(
+        [FromQuery] HabitsQueryParameters query,
+        SortMappingProvider sortMappingProvider)
     {
+        if (!sortMappingProvider.Validatemappings<HabitDto, Habit>(query.Sort))
+        {
+            return Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                detail: $"The provided sort parameter is not valid: '{query.Sort}'");
+        }
+
+        query.Search = query.Search?.Trim().ToLowerInvariant();
+
+        IReadOnlyList<SortMapping> sortMappings = sortMappingProvider.GetMappings<HabitDto, Habit>();
+
         List<HabitDto> habits = await dbContext.Habits
+                .Where(h => query.Search == null || h.Name.ToLower().Contains(query.Search) ||
+                        h.Description != null && h.Description.ToLower().Contains(query.Search))
+                .Where(h => query.Type == null || h.Type == query.Type)
+                .Where(h => query.Status == null || h.Status == query.Status)
+                .ApplySort(query.Sort, sortMappings.ToArray())
             .Select(HabitQueries.ProjectToDto())
             .ToListAsync();
         var habitsCollectionDto = new HabitsCollectionDto
@@ -34,7 +54,7 @@ public sealed class HabitsController(ApplicationDbContext dbContext) : Controlle
             .Where(h => h.Id == id)
             .Select(HabitQueries.ProjectToHabitWithTagsDto())
             .FirstOrDefaultAsync();
-        if(habit == null)
+        if (habit == null)
         {
             return NotFound();
         }
@@ -49,14 +69,14 @@ public sealed class HabitsController(ApplicationDbContext dbContext) : Controlle
         dbContext.Habits.Add(habit);
         await dbContext.SaveChangesAsync();
         HabitDto habitDto = habit.ToDto();
-        return CreatedAtAction(nameof(GetHabit), new {id = habitDto.Id}, habitDto);
+        return CreatedAtAction(nameof(GetHabit), new { id = habitDto.Id }, habitDto);
     }
 
     [HttpPut("{id}")]
     public async Task<ActionResult> UpdateHabit(string id, UpdateHabitDto updateHabitDto)
     {
         Habit? habit = await dbContext.Habits.FirstOrDefaultAsync(h => h.Id == id);
-        if(habit is null)
+        if (habit is null)
         {
             return NotFound();
         }
