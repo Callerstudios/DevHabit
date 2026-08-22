@@ -2,6 +2,7 @@ namespace DevHabit.API.Entities;
 
 public sealed class Habit
 {
+    private readonly List<HabitTag> _habitTags = [];
     public string Id { get; set; } = String.Empty;
     public string Name { get; set; } = String.Empty;
     public string? Description { get; set; }
@@ -16,8 +17,25 @@ public sealed class Habit
     public DateTime? UpdatedAtUtc { get; set; }
     public DateTime? LastCompletedAtUtc { get; set; }
 
-    public IReadOnlyCollection<HabitTag> HabitTags { get; } = new List<HabitTag>();
+    public IReadOnlyCollection<HabitTag> HabitTags => _habitTags;
     public IReadOnlyCollection<Tag> Tags { get; } = new List<Tag>();
+
+    public void RemoveTagsExcept(IEnumerable<string> tagIds)
+    {
+        _habitTags.RemoveAll(ht => !tagIds.Contains(ht.TagId));
+    }
+    public void AddTagIdsRange(IEnumerable<string> tagIds, string habitId)
+    {
+        _habitTags.AddRange(tagIds.Select(tagId =>
+        {
+            return new HabitTag
+            {
+                HabitId = habitId,
+                TagId = tagId,
+                CreatedAtUtc = DateTime.UtcNow,
+            };
+        }));
+    }
 }
 
 public enum HabitType
