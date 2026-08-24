@@ -154,6 +154,7 @@ dotnet_analyzer_diagnostic.severity = suggestion
 
 # CA1062: Validate arguments of public methods
 dotnet_diagnostic.CA1062.severity = suggestion
+dotnet_diagnostic.CA1000.severity = suggestion
 
 dotnet_diagnostic.CA1308.severity = none
 dotnet_diagnostic.CA1311.severity = none

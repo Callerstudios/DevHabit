@@ -23,7 +23,7 @@ public sealed class TagsController(ApplicationDbContext dbContext) : ControllerB
             .ToListAsync();
         var tagsCollectionDto = new TagsCollectionDto
         {
-            Data = tags
+            Items = tags
         };
 
         return Ok(tagsCollectionDto);
