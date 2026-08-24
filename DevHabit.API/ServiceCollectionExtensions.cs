@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using DevHabit.API.Database;
 using DevHabit.API.DTOs.Habits;
 using DevHabit.API.Entities;
@@ -17,7 +16,7 @@ using OpenTelemetry.Trace;
 
 namespace DevHabit.API;
 
-public static class DependencyInjection
+public static class ServiceCollectionExtensions
 {
     public static WebApplicationBuilder AddControllers(this WebApplicationBuilder builder)
     {
@@ -93,6 +92,11 @@ public static class DependencyInjection
             HabitMappings.SortMapping);
 
         builder.Services.AddTransient<DataShapingService>();
+
+        builder.Services.AddHttpContextAccessor();
+
+        builder.Services.AddTransient<LinkService>();
+
         return builder;
     }
 }

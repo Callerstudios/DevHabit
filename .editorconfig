@@ -171,6 +171,6 @@ dotnet_diagnostic.CA1031.severity = suggestion
 
 dotnet_diagnostic.CA1862.severity = none
 
-dotnet_diagnostic.CS8019.severity = suggestion
+#dotnet_diagnostic.CS8019.severity = suggestion
 
-dotnet_diagnostic.IDE0005.severity = warning
+#dotnet_diagnostic.IDE0005.severity = warning

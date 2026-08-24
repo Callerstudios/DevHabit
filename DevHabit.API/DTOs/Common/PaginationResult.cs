@@ -2,12 +2,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DevHabit.API.DTOs.Common;
 
-public sealed record PaginationResult<T> : ICollectionResponse<T>
+public sealed record PaginationResult<T> : ICollectionResponse<T>, ILinksResponse
 {
     public required IReadOnlyCollection<T> Items { get; init; }
     public required int Page { get; init; }
     public required int PageSize { get; init; }
     public required int TotalItems { get; init; }
+    public IEnumerable<LinkDto> Links { get; set; } = [];
 
     public int TotalPages => (int)Math.Ceiling((double)TotalItems / PageSize);
     public bool HasPreviousPage => Page > 1;
