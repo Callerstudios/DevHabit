@@ -16,7 +16,6 @@ public sealed class LinkService(LinkGenerator linkGenerator, IHttpContextAccesso
             endpointName,
             controller,
             values);
-
         return new LinkDto
         {
             Href = href ?? throw new InvalidOperationException("Invalid Endpoint name provided"),

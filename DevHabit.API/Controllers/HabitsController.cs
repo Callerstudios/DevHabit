@@ -163,7 +163,7 @@ public sealed class HabitsController(ApplicationDbContext dbContext, LinkService
             linkService.Create(nameof(UpdateHabit), "update", HttpMethods.Put, new { id }),
             linkService.Create(nameof(PatchHabit), "partial-update", HttpMethods.Patch, new { id }),
             linkService.Create(nameof(DeleteHabit), "delete", HttpMethods.Delete, new { id }),
-            linkService.Create(nameof(DeleteHabit), "upsert-tags", HttpMethods.Put, new { habitId = id }, HabitTagsController.Name),
+            linkService.Create(nameof(HabitTagsController.UpsertHabitTags), "upsert-tags", HttpMethods.Put, new { habitId = id }, HabitTagsController.Name),
         };
         return links.ToList();
     }
