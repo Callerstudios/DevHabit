@@ -1,0 +1,26 @@
+using DevHabit.API.Database;
+using DevHabit.API.DTOs.Users;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+
+namespace DevHabit.API.Controllers;
+
+[ApiController]
+[Route("users")]
+internal sealed class UsersController(ApplicationDbContext dbContext): ControllerBase
+{
+    [HttpGet("{id}")]
+    public async Task<ActionResult<UserDto>> GetUserById(string id)
+    {
+        UserDto? user = await dbContext.Users
+            .Where(x => x.Id == id)
+            .Select(UserQueries.ProjectToDto())
+            .FirstOrDefaultAsync();
+
+        if(user is null)
+        {
+            return NotFound();
+        }
+        return Ok(user);
+    }
+}
