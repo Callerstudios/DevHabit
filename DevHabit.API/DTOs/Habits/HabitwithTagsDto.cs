@@ -1,9 +1,8 @@
-using DevHabit.API.DTOs.Common;
 using DevHabit.API.Entities;
 
 namespace DevHabit.API.DTOs.Habits;
 
-public sealed record HabitDto: ILinksResponse
+public sealed record HabitwithTagsDto
 {
     public required string Id { get; init; }
     public required string Name { get; init; }
@@ -18,23 +17,5 @@ public sealed record HabitDto: ILinksResponse
     public required DateTime CreatedAtUtc { get; init; }
     public DateTime? UpdatedAtUtc { get; init; }
     public DateTime? LastCompletedAtUtc { get; init; }
-    public IEnumerable<LinkDto> Links { get; set; } = [];
+    public required IReadOnlyCollection<string> Tags { get; init; }
 }
-
-public sealed class FrequencyDto
-{
-    public required FrequencyType Type { get; init; }
-    public required int TimesPerPeriod { get; init; }
-
-}
-public sealed class TargetDto
-{
-    public required int Value { get; init; }
-    public required string Unit { get; init; }
-}
-public sealed class MilestoneDto
-{
-    public required int Target { get; init; }
-    public required int Current { get; init; }
-}
-

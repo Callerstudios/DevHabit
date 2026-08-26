@@ -1,4 +1,5 @@
 using System.Dynamic;
+using Asp.Versioning;
 using DevHabit.API.Database;
 using DevHabit.API.DTOs.Common;
 using DevHabit.API.DTOs.Habits;
@@ -9,11 +10,13 @@ using FluentValidation;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace DevHabit.API.Controllers;
 
 [ApiController]
 [Route("habits")]
+[ApiVersion(1.0)]
 public sealed class HabitsController(ApplicationDbContext dbContext, LinkService linkService) : ControllerBase
 {
     [HttpGet]
@@ -53,30 +56,38 @@ public sealed class HabitsController(ApplicationDbContext dbContext, LinkService
             .Skip((query.Page - 1) * query.PageSize)
             .Take(query.PageSize)
             .ToListAsync();
+        bool includeLinks = query.Accept == CustomMediaTypeNames.Application.HateoasJson;
+
         var paginationResult = new PaginationResult<ExpandoObject>
         {
-            Items = dataShapingService.ShapeDataCollection(habits, query.Fields, h => CreateLinksForHabit(h.Id, query.Fields)),
+            Items = dataShapingService.ShapeDataCollection(habits, 
+            query.Fields, 
+            includeLinks ? h => CreateLinksForHabit(h.Id, query.Fields) : null),
             Page = query.Page,
             PageSize = query.PageSize,
             TotalItems = totalCount
         };
-        paginationResult.Links = CreateLinksForHabits(query, paginationResult.HasNextPage, paginationResult.HasPreviousPage);
+        if (includeLinks)
+        {
+            paginationResult.Links = CreateLinksForHabits(query, paginationResult.HasNextPage, paginationResult.HasPreviousPage);
+        }
         return Ok(paginationResult);
     }
 
     [HttpGet("{id}")]
+    [MapToApiVersion(1.0)]
     public async Task<IActionResult> GetHabit(string id,
         string? fields,
+        [FromHeader(Name = "Accept")]
+        string? accept,
         DataShapingService dataShapingService)
     {
-        if (!dataShapingService.Validate<HabitDto>(fields))
+        if (!dataShapingService.Validate<HabitwithTagsDto>(fields))
         {
             return Problem(
                 statusCode: StatusCodes.Status400BadRequest,
                 detail: $"The provided data shape fields is not valid: '{fields}'");
         }
-
-
 
         HabitwithTagsDto? habit = await dbContext.Habits
             .Where(h => h.Id == id)
@@ -88,9 +99,50 @@ public sealed class HabitsController(ApplicationDbContext dbContext, LinkService
         }
 
         ExpandoObject shapedHabitDto = dataShapingService.ShapeData(habit, fields);
-        List<LinkDto> links = CreateLinksForHabit(id, fields);
+        bool includeLinks = accept == CustomMediaTypeNames.Application.HateoasJson;
 
-        shapedHabitDto.TryAdd("links", links);
+        if (includeLinks)
+        {
+            List<LinkDto> links = CreateLinksForHabit(id, fields);
+
+            shapedHabitDto.TryAdd("links", links);
+        }
+
+        return Ok(shapedHabitDto);
+    }
+    [HttpGet("{id}")]
+    [MapToApiVersion(2.0)]
+    public async Task<IActionResult> GetHabitV2(string id,
+        string? fields,
+        [FromHeader(Name = "Accept")]
+        string? accept,
+        DataShapingService dataShapingService)
+    {
+        if (!dataShapingService.Validate<HabitwithTagsDtoV2>(fields))
+        {
+            return Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                detail: $"The provided data shape fields is not valid: '{fields}'");
+        }
+
+        HabitwithTagsDtoV2? habit = await dbContext.Habits
+            .Where(h => h.Id == id)
+            .Select(HabitQueries.ProjectToHabitWithTagsDtoV2())
+            .FirstOrDefaultAsync();
+        if (habit == null)
+        {
+            return NotFound();
+        }
+
+        ExpandoObject shapedHabitDto = dataShapingService.ShapeData(habit, fields);
+        bool includeLinks = accept == CustomMediaTypeNames.Application.HateoasJson;
+
+        if (includeLinks)
+        {
+            List<LinkDto> links = CreateLinksForHabit(id, fields);
+
+            shapedHabitDto.TryAdd("links", links);
+        }
 
         return Ok(shapedHabitDto);
     }
