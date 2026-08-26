@@ -7,5 +7,5 @@ public class User
     public required string Name { get; set; }
     public required DateTime CreatedAtUtc { get; set; }
     public DateTime? UpdatedAtUtc { get; set; }
-    public required string IdentityId { get; set; }
+    public string IdentityId { get; set; } = string.Empty;
 }
