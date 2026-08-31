@@ -36,13 +36,13 @@ public sealed class AuthController(UserManager<IdentityUser> userManager,
             Email = registerUserDto.Email,
             UserName = registerUserDto.Name
         };
-        IdentityResult identityResult = await userManager.CreateAsync(identityUser, registerUserDto.Password);
-        if (!identityResult.Succeeded)
+        IdentityResult createUserResult = await userManager.CreateAsync(identityUser, registerUserDto.Password);
+        if (!createUserResult.Succeeded)
         {
             var extensions = new Dictionary<string, object?>
             {
                 {
-                    "errors", identityResult.Errors 
+                    "errors", createUserResult.Errors 
                 }
             };
             return Problem(
@@ -51,6 +51,22 @@ public sealed class AuthController(UserManager<IdentityUser> userManager,
                 extensions: extensions);
         }
         // Create App User
+        IdentityResult addToRoleResult = await userManager.AddToRoleAsync(identityUser, Roles.Member);
+
+        if (!addToRoleResult.Succeeded)
+        {
+            var extensions = new Dictionary<string, object?>
+            {
+                {
+                    "errors", addToRoleResult.Errors
+                }
+            };
+            return Problem(
+                detail: "Unable to register the user, please try again",
+                statusCode: StatusCodes.Status400BadRequest,
+                extensions: extensions);
+        }
+
         User user = registerUserDto.ToEntity();
 
         user.IdentityId = identityUser.Id;
@@ -59,7 +75,7 @@ public sealed class AuthController(UserManager<IdentityUser> userManager,
 
         await applicationDbContext.SaveChangesAsync();
 
-        var tokenRequest = new TokenRequest(identityUser.Id, identityUser.Email);
+        var tokenRequest = new TokenRequest(identityUser.Id, identityUser.Email, [Roles.Member]);
         var accessTokens = tokenProvider.Create(tokenRequest);
 
         RefreshToken refreshToken = new()
@@ -86,8 +102,8 @@ public sealed class AuthController(UserManager<IdentityUser> userManager,
         {
             return Unauthorized();
         }
-        Console.WriteLine($"login Id: {identityUser.Id} Email: {identityUser.Email}");
-        TokenRequest tokenRequest = new(identityUser.Id, identityUser.Email!);
+        IList<string> roles = await userManager.GetRolesAsync(identityUser);
+        TokenRequest tokenRequest = new(identityUser.Id, identityUser.Email!, roles);
         AccessTokensDto accessTokens = tokenProvider.Create(tokenRequest);
 
         RefreshToken refreshToken = new()
@@ -114,8 +130,8 @@ public sealed class AuthController(UserManager<IdentityUser> userManager,
         {
             return Unauthorized();
         }
-        TokenRequest tokenRequest = new(refreshToken.User.Id, refreshToken.User.Email!);
-        Console.WriteLine($"Id: {tokenRequest.UserId} Email: {tokenRequest.Email}");
+        IList<string> roles = await userManager.GetRolesAsync(refreshToken.User);
+        TokenRequest tokenRequest = new(refreshToken.User.Id, refreshToken.User.Email!, roles);
         AccessTokensDto accessTokens = tokenProvider.Create(tokenRequest);
 
         refreshToken.Token = accessTokens.Refreshtoken;
