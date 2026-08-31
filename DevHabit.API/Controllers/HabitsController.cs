@@ -8,6 +8,7 @@ using DevHabit.API.Entities;
 using DevHabit.API.Services;
 using DevHabit.API.Services.Sorting;
 using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +16,7 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace DevHabit.API.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("habits")]
 [ApiVersion(1.0)]

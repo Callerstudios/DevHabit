@@ -2,15 +2,17 @@ using DevHabit.API.Database;
 using DevHabit.API.DTOs.Habits;
 using DevHabit.API.DTOs.HabitTags;
 using DevHabit.API.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace DevHabit.API.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("habits/{habitId}/tags")]
-public sealed class HabitTagsController(ApplicationDbContext dbContext) : Controller
+public sealed class HabitTagsController(ApplicationDbContext dbContext) : ControllerBase
 {
     public static readonly string Name = nameof(HabitTagsController).Replace("Controller", string.Empty, StringComparison.OrdinalIgnoreCase);
     [HttpPut]

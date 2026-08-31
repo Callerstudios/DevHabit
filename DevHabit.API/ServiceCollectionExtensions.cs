@@ -1,3 +1,4 @@
+using System.Text;
 using Asp.Versioning;
 using DevHabit.API.Database;
 using DevHabit.API.DTOs.Habits;
@@ -5,12 +6,15 @@ using DevHabit.API.Entities;
 using DevHabit.API.Middleware;
 using DevHabit.API.Services;
 using DevHabit.API.Services.Sorting;
+using DevHabit.API.Settings;
 using FluentValidation;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json.Serialization;
 using Npgsql;
 using OpenTelemetry;
@@ -136,6 +140,8 @@ public static class ServiceCollectionExtensions
 
         builder.Services.AddTransient<LinkService>();
 
+        builder.Services.AddTransient<TokenProvider>();
+
         return builder;
     }
 
@@ -143,6 +149,36 @@ public static class ServiceCollectionExtensions
     {
         builder.Services.AddIdentity<IdentityUser, IdentityRole>()
             .AddEntityFrameworkStores<ApplicationIdentityDbContext>();
+
+        builder.Services.Configure<JwtAuthOptions>(builder.Configuration.GetSection("Jwt"));
+
+        JwtAuthOptions jwtAuthOptions = builder.Configuration.GetSection("Jwt").Get<JwtAuthOptions>()!;
+
+        builder.Services
+            .AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+
+                    ValidIssuer = jwtAuthOptions.Issuer,
+                    ValidAudience = jwtAuthOptions.Audience,
+
+                    IssuerSigningKey = new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(jwtAuthOptions.Key)
+                    )
+                };
+            });
+
+        builder.Services.AddAuthorization();
 
         return builder;
     }

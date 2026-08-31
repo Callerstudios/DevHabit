@@ -6,7 +6,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace DevHabit.API.Migrations.identity
+namespace DevHabit.API.Migrations.Identity
 {
     /// <inheritdoc />
     public partial class AddIdentity : Migration
