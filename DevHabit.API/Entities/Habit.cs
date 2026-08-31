@@ -3,8 +3,9 @@ namespace DevHabit.API.Entities;
 public sealed class Habit
 {
     private readonly List<HabitTag> _habitTags = [];
-    public string Id { get; set; } = String.Empty;
-    public string Name { get; set; } = String.Empty;
+    public string Id { get; set; } = string.Empty;
+    public string UserId { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public HabitType Type { get; set; }
     public Frequency Frequency { get; set; } = new();
@@ -18,7 +19,7 @@ public sealed class Habit
     public DateTime? LastCompletedAtUtc { get; set; }
 
     public IReadOnlyCollection<HabitTag> HabitTags => _habitTags;
-    public IReadOnlyCollection<Tag> Tags { get; } = new List<Tag>();
+    public IReadOnlyCollection<Tag> Tags { get; } = [];
 
     public void RemoveTagsExcept(IEnumerable<string> tagIds)
     {

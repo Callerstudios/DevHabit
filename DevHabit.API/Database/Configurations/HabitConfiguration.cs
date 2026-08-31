@@ -10,6 +10,7 @@ namespace DevHabit.API.Database.Configurations
         {
             builder.HasKey(x => x.Id);
             builder.Property(x => x.Id).HasMaxLength(500);
+            builder.Property(x => x.UserId).HasMaxLength(500);
             builder.Property(x => x.Name).HasMaxLength(100);
             builder.Property(x => x.Description).HasMaxLength(500);
             builder.OwnsOne(h => h.Frequency);
@@ -21,6 +22,9 @@ namespace DevHabit.API.Database.Configurations
             builder.HasMany(h => h.Tags)
                 .WithMany()
                 .UsingEntity<HabitTag>();
+            builder.HasOne<User>()
+                .WithMany()
+                .HasForeignKey(h => h.UserId);
         }
     }
 }

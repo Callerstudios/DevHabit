@@ -142,6 +142,9 @@ public static class ServiceCollectionExtensions
 
         builder.Services.AddTransient<TokenProvider>();
 
+        builder.Services.AddMemoryCache();
+        builder.Services.AddScoped<UserContext>();
+
         return builder;
     }
 
