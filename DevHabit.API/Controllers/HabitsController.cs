@@ -8,6 +8,7 @@ using DevHabit.API.Entities;
 using DevHabit.API.Services;
 using DevHabit.API.Services.Sorting;
 using FluentValidation;
+using FluentValidation.Results;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
@@ -176,7 +177,18 @@ public sealed class HabitsController(ApplicationDbContext dbContext,
         {
             return Unauthorized();
         }
-        await validator.ValidateAndThrowAsync(createHabitDto);
+        ValidationResult result = await validator.ValidateAsync(createHabitDto);
+
+        if (!result.IsValid)
+        {
+            var problemDetails = new ValidationProblemDetails(result.ToDictionary())
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Title = "One or more validation errors occurred."
+            };
+
+            return BadRequest(problemDetails);
+        }
         Habit habit = createHabitDto.ToEntity(userId);
         dbContext.Habits.Add(habit);
         await dbContext.SaveChangesAsync();

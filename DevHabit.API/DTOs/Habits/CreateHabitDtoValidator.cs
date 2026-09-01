@@ -25,8 +25,7 @@ public sealed class CreateHabitDtoValidator : AbstractValidator<CreateHabitDto>
     {
         RuleFor(x => x.Name)
             .NotEmpty()
-            .MinimumLength(3)
-            .MaximumLength(100)
+            .Length(3, 100)
             .WithMessage("Habit name must be between 3 and 100 characters");
 
         RuleFor(x => x.Description)

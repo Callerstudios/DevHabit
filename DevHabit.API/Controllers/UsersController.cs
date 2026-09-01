@@ -10,12 +10,13 @@ using Microsoft.EntityFrameworkCore;
 namespace DevHabit.API.Controllers;
 
 [Authorize(Roles = $"{Roles.Member}")]
+[Authorize]
 [ApiController]
 [Route("users")]
 public sealed class UsersController(ApplicationDbContext dbContext, UserContext userContext): ControllerBase
 {
     [HttpGet("{id}")]
-    public async Task<ActionResult<UserDto>> GetUserById(string id) 
+    public async Task<ActionResult<UserDto>> GetUserById(string id)
     {
         string? userId = await userContext.GetUserIdAsync();
 
@@ -44,6 +45,10 @@ public sealed class UsersController(ApplicationDbContext dbContext, UserContext 
         {
             return Unauthorized();
         }
+        if (User.IsInRole(Roles.Member))
+        {
+            Console.WriteLine("User is a member");
+        }
 
         UserDto? user = await dbContext.Users
             .Where(x => x.Id == userId)
@@ -53,6 +58,10 @@ public sealed class UsersController(ApplicationDbContext dbContext, UserContext 
         if(user is null)
         {
             return NotFound();
+        }
+        if (User.IsInRole(Roles.Member))
+        {
+            return Ok("Member");
         }
         return Ok(user);
     }

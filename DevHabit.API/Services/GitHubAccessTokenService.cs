@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DevHabit.API.Services;
 
-public class GitHubAccessTokenService(ApplicationDbContext dbContext)
+public class GitHubAccessTokenService(ApplicationDbContext dbContext, EncryptionService encryptionService)
 {
     public async Task StoreAsync(
         string userId,
@@ -14,10 +14,12 @@ public class GitHubAccessTokenService(ApplicationDbContext dbContext)
     {
         GitHubAccessToken? existingToken = await GetAccessTokenAsync(userId, cancellationToken);
 
+        string encryptedToken = encryptionService.Encrypt(accessTokenDto.Token);
+
         if (existingToken is not null)
         {
-            existingToken.Token = accessTokenDto.Token;
-            existingToken.ExpiresAtUtc = accessTokenDto.ExpiresAtUtc;
+            existingToken.Token = encryptedToken;
+            existingToken.ExpiresAtUtc = DateTime.UtcNow.AddDays(accessTokenDto.ExpiresInDays);
             existingToken.CreatedAtUtc = DateTime.UtcNow;
         }
         else
@@ -27,13 +29,12 @@ public class GitHubAccessTokenService(ApplicationDbContext dbContext)
                 Id = Guid.NewGuid().ToString(),
                 UserId = userId,
                 Token = accessTokenDto.Token,
-                ExpiresAtUtc = accessTokenDto.ExpiresAtUtc,
+                ExpiresAtUtc = DateTime.UtcNow.AddDays(accessTokenDto.ExpiresInDays),
                 CreatedAtUtc = DateTime.UtcNow
             };
 
             dbContext.GitHubAccessTokens.Add(accessToken);
         }
-
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
@@ -45,16 +46,18 @@ public class GitHubAccessTokenService(ApplicationDbContext dbContext)
 
         if (accessToken is null)
         {
+            Console.WriteLine($"No GitHub access token found for user {userId}");
             return null;
         }
 
         if (accessToken.ExpiresAtUtc <= DateTime.UtcNow)
         {
+            Console.WriteLine($"GitHub access token for user {userId} has expired, revoking it");
             await RevokeAsync(userId, cancellationToken);
             return null;
         }
-
-        return accessToken.Token;
+        string decryptedToken = encryptionService.Decrypt(accessToken.Token);
+        return decryptedToken;
     }
 
     public async Task RevokeAsync(

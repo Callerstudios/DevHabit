@@ -11,8 +11,8 @@ public record AcceptHeaderDto
 
     public bool IncludeLinks =>
     MediaTypeHeaderValue.TryParse(Accept, out MediaTypeHeaderValue? mediaType) &&
-    mediaType.MediaType?
-        .Split('/', 2)
-        .ElementAtOrDefault(1)?
-        .Contains(CustomMediaTypeNames.Application.HateoasSubType, StringComparison.OrdinalIgnoreCase) == true;
+    string.Equals(
+        mediaType.MediaType,
+        CustomMediaTypeNames.Application.HateoasJson,
+        StringComparison.OrdinalIgnoreCase);
 }
