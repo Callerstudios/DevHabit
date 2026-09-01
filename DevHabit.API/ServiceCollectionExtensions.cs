@@ -10,6 +10,7 @@ using DevHabit.API.Services.Sorting;
 using DevHabit.API.Settings;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
@@ -202,6 +203,21 @@ public static class ServiceCollectionExtensions
 
         builder.Services.AddAuthorization();
 
+        return builder;
+    }
+    public static WebApplicationBuilder AddCorsPolicy(this WebApplicationBuilder builder)
+    {
+        CorsOptionsExtension corsOptions = builder.Configuration.GetSection(CorsOptionsExtension.SectionName).Get<CorsOptionsExtension>()!;
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("DefaultCorsPolicy", policy =>
+            {
+                policy.WithOrigins(corsOptions.AllowedOrigins.ToArray())
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials();
+            });
+        });
         return builder;
     }
 }
