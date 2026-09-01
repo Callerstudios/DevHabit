@@ -48,7 +48,7 @@ public static class ServiceCollectionExtensions
             formatter.SupportedMediaTypes.Add(CustomMediaTypeNames.Application.JsonV2);
             formatter.SupportedMediaTypes.Add(CustomMediaTypeNames.Application.HateoasJson);
             formatter.SupportedMediaTypes.Add(CustomMediaTypeNames.Application.HateoasJsonV1);
-            formatter.SupportedMediaTypes.Add(CustomMediaTypeNames.Application.HateoasJsonV2);
+            formatter.SupportedMediaTypes.Add(CustomMediaTypeNames.Application.HateoasJsonV2); 
         });
 
         builder.Services
@@ -57,9 +57,8 @@ public static class ServiceCollectionExtensions
                 options.DefaultApiVersion = new ApiVersion(1.0);
                 options.AssumeDefaultVersionWhenUnspecified = true;
                 options.ReportApiVersions = true;
-                options.ApiVersionSelector = new DefaultApiVersionSelector(options);
+                options.ApiVersionSelector = new DefaultApiVersionSelector(options); 
                 options.ApiVersionReader = ApiVersionReader.Combine(
-                    new MediaTypeApiVersionReader(),
                     new MediaTypeApiVersionReaderBuilder()
                         .Template("application/vnd.dev-habit.hateoas.{version}+json")
                         .Build());
@@ -67,6 +66,8 @@ public static class ServiceCollectionExtensions
             .AddMvc();
 
         builder.Services.AddOpenApi();
+
+        builder.Services.AddResponseCaching();
 
         return builder;
     }
@@ -165,6 +166,8 @@ public static class ServiceCollectionExtensions
         builder.Services.Configure<EncryptionOptions>(builder.Configuration.GetSection("Encryption"));
         builder.Services.AddTransient<EncryptionService>();
 
+        builder.Services.AddSingleton<InMemoryETagStore>();
+
         return builder;
     }
 
@@ -210,7 +213,7 @@ public static class ServiceCollectionExtensions
         CorsOptionsExtension corsOptions = builder.Configuration.GetSection(CorsOptionsExtension.SectionName).Get<CorsOptionsExtension>()!;
         builder.Services.AddCors(options =>
         {
-            options.AddPolicy("DefaultCorsPolicy", policy =>
+            options.AddPolicy(CorsOptionsExtension.PolicyName, policy =>
             {
                 policy.WithOrigins(corsOptions.AllowedOrigins.ToArray())
                     .AllowAnyHeader()

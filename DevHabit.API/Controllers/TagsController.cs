@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DevHabit.API.Controllers;
 
+[ResponseCache(Duration = 120)]
 [Authorize]
 [ApiController]
 [Route("tags")]

@@ -1,3 +1,4 @@
+using DevHabit.API.Middlewares;
 using DevHabit.API;
 using DevHabit.API.Extensions;
 using DevHabit.API.Settings;
@@ -16,6 +17,8 @@ builder
 
 WebApplication app = builder.Build();
 
+Console.WriteLine($"Environment: {app.Environment.EnvironmentName}");
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -32,6 +35,8 @@ app.UseCors(CorsOptionsExtension.PolicyName);
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseMiddleware<ETagMiddleware>();
 
 app.MapControllers();
 
