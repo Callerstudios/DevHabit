@@ -5,6 +5,7 @@ using Asp.Versioning;
 using DevHabit.API.Database;
 using DevHabit.API.DTOs.Habits;
 using DevHabit.API.Entities;
+using DevHabit.API.Extensions;
 using DevHabit.API.Middleware;
 using DevHabit.API.Services;
 using DevHabit.API.Services.Sorting;
@@ -258,7 +259,7 @@ public static class ServiceCollectionExtensions
 
             options.AddPolicy("default", httpContext =>
             {
-                string username = httpContext.User.Identity?.Name ?? "";
+                string username = httpContext.User.GetIdentityId() ?? "";
                 if (!string.IsNullOrEmpty(username))
                 {
                     return RateLimitPartition.GetTokenBucketLimiter(username, key => new TokenBucketRateLimiterOptions
