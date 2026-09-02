@@ -2,6 +2,7 @@ using DevHabit.API.Database;
 using DevHabit.API.DTOs.Habits;
 using DevHabit.API.DTOs.Tags;
 using DevHabit.API.Entities;
+using DevHabit.API.Services;
 using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Authorization;
@@ -78,7 +79,8 @@ public sealed class TagsController(ApplicationDbContext dbContext) : ControllerB
     [HttpPut("{id}")]
     public async Task<ActionResult<TagDto>> UpdateTag(
         string id,
-        UpdateTagDto dto)
+        UpdateTagDto dto,
+        InMemoryETagStore eTagStore)
     {
         Tag? tag = await dbContext.Tags.FirstOrDefaultAsync(t => t.Id == id);
 
@@ -90,6 +92,7 @@ public sealed class TagsController(ApplicationDbContext dbContext) : ControllerB
         tag.UpdateFromDto(dto);
 
         await dbContext.SaveChangesAsync();
+        eTagStore.SetETag(Request.Path.Value!, tag.ToDto());
 
         return Ok(tag.ToDto());
     }

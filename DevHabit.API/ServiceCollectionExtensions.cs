@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using System.Text;
+using System.Threading.RateLimiting;
 using Asp.Versioning;
 using DevHabit.API.Database;
 using DevHabit.API.DTOs.Habits;
@@ -14,6 +15,7 @@ using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.IdentityModel.Tokens;
@@ -23,6 +25,7 @@ using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using Refit;
 
 namespace DevHabit.API;
 
@@ -48,7 +51,7 @@ public static class ServiceCollectionExtensions
             formatter.SupportedMediaTypes.Add(CustomMediaTypeNames.Application.JsonV2);
             formatter.SupportedMediaTypes.Add(CustomMediaTypeNames.Application.HateoasJson);
             formatter.SupportedMediaTypes.Add(CustomMediaTypeNames.Application.HateoasJsonV1);
-            formatter.SupportedMediaTypes.Add(CustomMediaTypeNames.Application.HateoasJsonV2); 
+            formatter.SupportedMediaTypes.Add(CustomMediaTypeNames.Application.HateoasJsonV2);
         });
 
         builder.Services
@@ -57,7 +60,7 @@ public static class ServiceCollectionExtensions
                 options.DefaultApiVersion = new ApiVersion(1.0);
                 options.AssumeDefaultVersionWhenUnspecified = true;
                 options.ReportApiVersions = true;
-                options.ApiVersionSelector = new DefaultApiVersionSelector(options); 
+                options.ApiVersionSelector = new DefaultApiVersionSelector(options);
                 options.ApiVersionReader = ApiVersionReader.Combine(
                     new MediaTypeApiVersionReaderBuilder()
                         .Template("application/vnd.dev-habit.hateoas.{version}+json")
@@ -150,6 +153,7 @@ public static class ServiceCollectionExtensions
 
         builder.Services.AddScoped<GitHubAccessTokenService>();
         builder.Services.AddTransient<GitHubService>();
+        builder.Services.AddTransient<RefitGitHubService>();
         builder.Services
             .AddHttpClient("github")
             .ConfigureHttpClient(client =>
@@ -163,6 +167,11 @@ public static class ServiceCollectionExtensions
                 .Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
             });
 
+        builder.Services.AddRefitClient<IGitHubApi>(new RefitSettings
+        {
+            ContentSerializer = new NewtonsoftJsonContentSerializer()
+        })
+            .ConfigureHttpClient(client => client.BaseAddress = new Uri("https://api.github.com"));
         builder.Services.Configure<EncryptionOptions>(builder.Configuration.GetSection("Encryption"));
         builder.Services.AddTransient<EncryptionService>();
 
@@ -219,6 +228,57 @@ public static class ServiceCollectionExtensions
                     .AllowAnyHeader()
                     .AllowAnyMethod()
                     .AllowCredentials();
+            });
+        });
+        return builder;
+    }
+    public static WebApplicationBuilder AddRateLimiting(this WebApplicationBuilder builder)
+    {
+        builder.Services.AddRateLimiter(options =>
+        {
+            options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+            options.OnRejected = async (context, cancellationToken) =>
+            {
+                if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out TimeSpan retryAfter))
+                {
+                    context.HttpContext.Response.Headers.RetryAfter = $"{retryAfter.TotalSeconds}";
+
+                    ProblemDetailsFactory problemDetailsFactory = context.HttpContext.RequestServices.GetRequiredService<ProblemDetailsFactory>();
+                    Microsoft.AspNetCore.Mvc.ProblemDetails problemDetails = problemDetailsFactory.CreateProblemDetails(
+                        context.HttpContext,
+                        statusCode: StatusCodes.Status429TooManyRequests,
+                        title: "Too Many Requests",
+                        detail: $"You have exceeded the allowed request limit. Please try again after {retryAfter.TotalSeconds} seconds."
+                    );
+
+                    await context.HttpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
+                }
+            };
+
+            options.AddPolicy("default", httpContext =>
+            {
+                string username = httpContext.User.Identity?.Name ?? "";
+                if (!string.IsNullOrEmpty(username))
+                {
+                    return RateLimitPartition.GetTokenBucketLimiter(username, key => new TokenBucketRateLimiterOptions
+                    {
+                        TokenLimit = 10,
+                        QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                        QueueLimit = 2,
+                        ReplenishmentPeriod = TimeSpan.FromSeconds(10),
+                        TokensPerPeriod = 10
+                    });
+
+                }
+                return RateLimitPartition.GetFixedWindowLimiter(
+                    "anonymous",
+                    _ => new FixedWindowRateLimiterOptions
+                    {
+                        Window = TimeSpan.FromSeconds(60),
+                        PermitLimit = 10
+                    }
+                );
             });
         });
         return builder;

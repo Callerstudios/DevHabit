@@ -26,7 +26,7 @@ public sealed class InMemoryETagStore
 
     public void SetETag(Uri resourceUri, object resource)
     {
-        ETags.AddOrUpdate(resourceUri.ToString(), GenerateEtag(resource), (_, _) => GenerateEtag(resource));
+        ETags.AddOrUpdate(resourceUri.ToString(), GenerateETag(resource), (_, _) => GenerateETag(resource));
     }
 
     public void SetETag(string resourceUri, string etag)
@@ -36,7 +36,7 @@ public sealed class InMemoryETagStore
 
     public void SetETag(string resourceUri, object resource)
     {
-        ETags.AddOrUpdate(resourceUri, GenerateEtag(resource), (_, _) => GenerateEtag(resource));
+        ETags.AddOrUpdate(resourceUri, GenerateETag(resource), (_, _) => GenerateETag(resource));
     }
 
     public void RemoveETag(Uri resourceUri)
@@ -49,7 +49,7 @@ public sealed class InMemoryETagStore
         ETags.TryRemove(resourceUri, out _);
     }
 
-    public static string GenerateEtag(object resource)
+    public static string GenerateETag(object resource)
     {
         byte[] content = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(resource));
         byte[] hash = SHA256.HashData(content);

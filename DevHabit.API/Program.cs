@@ -36,6 +36,8 @@ app.UseCors(CorsOptionsExtension.PolicyName);
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.UseRateLimiter();
+
 app.UseMiddleware<ETagMiddleware>();
 
 app.MapControllers();
