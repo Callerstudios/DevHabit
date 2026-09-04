@@ -18,8 +18,6 @@ builder
 
 WebApplication app = builder.Build();
 
-Console.WriteLine($"Environment: {app.Environment.EnvironmentName}");
-
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();

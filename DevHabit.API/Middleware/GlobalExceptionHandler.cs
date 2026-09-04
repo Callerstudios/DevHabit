@@ -3,10 +3,16 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace DevHabit.API.Middleware;
 
-public sealed class GlobalExceptionHandler(IProblemDetailsService problemDetailsService) : IExceptionHandler
+public sealed class GlobalExceptionHandler(IProblemDetailsService problemDetailsService, ILogger<GlobalExceptionHandler> logger) : IExceptionHandler
 {
     public ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
     {
+        logger.LogError(
+            exception,
+            "Unhandled exception. TraceId: {TraceId}, RequestId: {RequestId}",
+            httpContext.TraceIdentifier,
+            httpContext.TraceIdentifier);
+
         return problemDetailsService.TryWriteAsync(new ProblemDetailsContext() { 
             HttpContext = httpContext,
             Exception = exception,
